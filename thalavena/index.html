@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Virtual Classroom</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <div class="navbar">
+  <span class="home-icon" onclick="goHome()">
+    <i class="fas fa-home"></i> Home
+  </span>
+</div>
+<div class="ok">
+    <div id="containers">
+      <div class="welcome">
+        <h1 class="title">Welcome to Virtual Classroom</h1>
+
+        <div class="buttonDiv">
+            <button onclick="showLoginForm('admin')" class="button">
+            Admin
+          </button>
+          <button onclick="showLoginForm('teacher')" class="button">
+            Teacher
+          </button>
+          <button onclick="showLoginForm('student')" class="button">
+            Student
+          </button>
+             <button class="button" onclick="showRegisterModal()">
+                👥 Register User
+            </button>
+       
+        </div>
+
+        <div class="login-form" style="display: none">
+          <h2>Login</h2>
+          <div class="mmain">
+            <p id="login-role-text" class="role-text"></p>
+
+            <input type="email" id="login-email" placeholder="Email" required />
+            <input
+              type="password"
+              id="login-password"
+              placeholder="Password (8 characters)"
+              required
+            />
+            <button class="button" onclick="login()">Login</button>
+          </div>
+          <!-- <p class="toggle-form">
+            Don't have an account?
+            <a href="#" onclick="showRegisterForm()">Register</a>
+          </p> -->
+        </div>
+        
+
+      
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeRegisterModal()">&times;</span>
+            <h2 style="margin-bottom: 1.5rem; color: #1e293b;">Register New User</h2>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="register-UserName">Full Name</label>
+                    <input type="text" id="register-UserName" placeholder="Enter full name" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="register-email">Email Address</label>
+                    <input type="email" id="register-email" placeholder="Enter email address" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" placeholder="Password (8 characters)" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="register-confirm-password">Confirm Password</label>
+                    <input type="password" id="register-confirm-password" placeholder="Confirm password" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="register-role">Role</label>
+                    <select id="register-role" required>
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn" style="width: 100%; margin-top: 1rem;">
+                    Register User
+                </button>
+            </form>
+        </div>
+    </div>
+  </body>
+</html>

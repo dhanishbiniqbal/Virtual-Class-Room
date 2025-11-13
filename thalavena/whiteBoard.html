@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Interactive Whiteboard</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+    .navbar {
+      background-color: #4a6fa5;
+      color: white;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .home-icon {
+      cursor: pointer;
+      font-size: 18px;
+    }
+    .whiteboard-container {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 60px);
+    }
+    .toolbar {
+      background-color: #fff;
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      z-index: 10;
+      align-items: center;
+    }
+    .tool-btn {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background-color: #e9ecef;
+      transition: all 0.2s;
+    }
+    .tool-btn:hover {
+      background-color: #dee2e6;
+    }
+    .tool-btn.active {
+      background-color: #4a6fa5;
+      color: white;
+    }
+    .color-picker {
+      width: 30px;
+      height: 30px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 0;
+    }
+    .size-slider {
+      width: 100px;
+    }
+    .canvas-container {
+      flex: 1;
+      background-color: white;
+      margin: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      overflow: hidden;
+      position: relative;
+    }
+    #whiteboard {
+      background-color: white;
+      cursor: crosshair;
+      touch-action: none;
+      display: block;
+    }
+    .status-message {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      padding: 10px 15px;
+      border-radius: 4px;
+      color: white;
+      font-weight: bold;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .status-message.show {
+      opacity: 1;
+    }
+    .success {
+      background-color: #28a745;
+    }
+    .error {
+      background-color: #dc3545;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <span class="home-icon" onclick="goBack()">🏠 Back to Dashboard</span>
+    <h2>Interactive Whiteboard</h2>
+  </div>
+
+  <div class="whiteboard-container">
+    <div class="toolbar">
+      <button id="draw-btn" class="tool-btn active" onclick="setTool('draw')">✏ Draw</button>
+      <button id="erase-btn" class="tool-btn" onclick="setTool('erase')">🧽 Eraser</button>
+      <input type="color" id="color-picker" class="color-picker" value="#000000" />
+      <input type="range" id="size-slider" class="size-slider" min="1" max="50" value="5" />
+      <span id="size-value">5px</span>
+      <button class="tool-btn" onclick="clearCanvas()">🗑 Clear</button>
+      <button class="tool-btn" onclick="downloadCanvas()">💾 Download</button>
+    </div>
+
+    <div class="canvas-container">
+      <canvas id="whiteboard"></canvas>
+    </div>
+  </div>
+
+  <div id="status-message" class="status-message"></div>
+
+  <script>
+    const canvas = document.getElementById('whiteboard');
+    const ctx = canvas.getContext('2d');
+
+    let currentTool = 'draw';
+    let currentColor = '#000000';
+    let currentSize = 5;
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    function initCanvas() {
+      const container = document.querySelector('.canvas-container');
+      const width = container.clientWidth - 20;
+      const height = container.clientHeight > 0 ? container.clientHeight - 20 : 500;
+      canvas.width = width;
+      canvas.height = height;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      setupEventListeners();
+    }
+
+    function setupEventListeners() {
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseout', stopDrawing);
+
+      canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+      canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+      canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+      document.getElementById('color-picker').addEventListener('change', (e) => {
+        currentColor = e.target.value;
+      });
+
+      document.getElementById('size-slider').addEventListener('input', (e) => {
+        currentSize = e.target.value;
+        document.getElementById('size-value').textContent = currentSize + 'px';
+      });
+
+      window.addEventListener('resize', debounce(handleResize, 250));
+    }
+
+    function handleResize() {
+      const tempData = canvas.toDataURL();
+      const container = document.querySelector('.canvas-container');
+      canvas.width = container.clientWidth - 20;
+      canvas.height = container.clientHeight - 20;
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (tempData) {
+        const img = new Image();
+        img.onload = function () {
+          ctx.drawImage(img, 0, 0);
+        };
+        img.src = tempData;
+      }
+    }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function (...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+      };
+    }
+
+    function startDrawing(e) {
+      e.preventDefault();
+      isDrawing = true;
+      [lastX, lastY] = getPosition(e);
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      e.preventDefault();
+
+      const [x, y] = getPosition(e);
+
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(x, y);
+
+      if (currentTool === 'erase') {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.lineWidth = currentSize * 2;
+      } else {
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = currentColor;
+        ctx.lineWidth = currentSize;
+      }
+
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+
+      [lastX, lastY] = [x, y];
+    }
+
+    function stopDrawing(e) {
+      if (isDrawing) {
+        e.preventDefault();
+        isDrawing = false;
+        ctx.beginPath();
+      }
+    }
+
+    function handleTouchStart(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const mouseEvent = new MouseEvent('mousedown', {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+      });
+      startDrawing(mouseEvent);
+    }
+
+    function handleTouchMove(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const mouseEvent = new MouseEvent('mousemove', {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+      });
+      draw(mouseEvent);
+    }
+
+    function handleTouchEnd(e) {
+      e.preventDefault();
+      const mouseEvent = new MouseEvent('mouseup', {});
+      stopDrawing(mouseEvent);
+    }
+
+    function getPosition(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+
+      let clientX, clientY;
+
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      const x = (clientX - rect.left) * scaleX;
+      const y = (clientY - rect.top) * scaleY;
+
+      return [x, y];
+    }
+
+    function setTool(tool) {
+      currentTool = tool;
+
+      document.getElementById('draw-btn').classList.toggle('active', tool === 'draw');
+      document.getElementById('erase-btn').classList.toggle('active', tool === 'erase');
+
+      canvas.style.cursor = tool === 'erase' ? 'grab' : 'crosshair';
+    }
+
+    function clearCanvas() {
+      if (confirm('Are you sure you want to clear the whiteboard?')) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        showStatus('Whiteboard cleared', 'success');
+      }
+    }
+
+    function downloadCanvas() {
+      const link = document.createElement('a');
+      link.download = 'whiteboard_' + new Date().getTime() + '.png';
+      link.href = canvas.toDataURL();
+      link.click();
+      showStatus('Whiteboard downloaded', 'success');
+    }
+function showStatus(message, type) {
+  const statusEl = document.getElementById('status-message');
+  statusEl.textContent = message;
+  statusEl.className = `status-message ${type} show`;
+
+  setTimeout(() => {
+    statusEl.classList.remove('show');
+  }, 3000);
+}
+
+
+    function goBack() {
+      if (confirm('Are you sure you want to leave? Any unsaved work will be lost.')) {
+        showStatus('Would navigate back to dashboard', 'success');
+      }
+    }
+
+    window.addEventListener('load', initCanvas);
+
+    document.body.addEventListener('touchstart', function (e) {
+      if (e.target === canvas) e.preventDefault();
+    }, { passive: false });
+    document.body.addEventListener('touchend', function (e) {
+      if (e.target === canvas) e.preventDefault();
+    }, { passive: false });
+    document.body.addEventListener('touchmove', function (e) {
+      if (e.target === canvas) e.preventDefault();
+    }, { passive: false });
+  </script>
+</body>
+</html>

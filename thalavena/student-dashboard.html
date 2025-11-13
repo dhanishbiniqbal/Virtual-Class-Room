@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="./student.css" />
+    <style>
+      /* Additional styles for files section */
+      .files-section {
+        background: rgba(255, 255, 255, 0.57);
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+      }
+
+      .files-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .file-card {
+        background: #f8f9faa7;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .file-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .file-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        text-align: center;
+      }
+
+      .file-name {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.25rem;
+        word-break: break-word;
+      }
+
+      .file-meta {
+        font-size: 0.8rem;
+        color: #666;
+        margin-bottom: 0.5rem;
+      }
+
+      .file-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+
+      .file-btn {
+        padding: 0.25rem 0.5rem;
+        border: none;
+        border-radius: 5px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .download-btn {
+        background: #28a745;
+        color: white;
+      }
+
+      .download-btn:hover {
+        background: #218838;
+      }
+
+      .view-btn {
+        background: #007bff;
+        color: white;
+      }
+
+      .view-btn:hover {
+        background: #0056b3;
+      }
+
+      .files-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+
+      .files-count {
+        background: #e9ecef;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        color: #495057;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="navbar">
+      <span class="home-icon" onclick="logout()">🏠 Logout</span>
+      <div class="user-info" id="user-info"></div>
+    </div>
+
+    <div></div>
+    <div class="mainn d-flex flex-column gap-4">
+      <!-- Files Section -->
+      <div class="files-section mt-5">
+        <div class="files-header">
+          <h2 class="card-title">📁 Course Materials</h2>
+          <span class="files-count" id="files-count">0 files</span>
+        </div>
+
+        <div id="files-loading" class="loading">Loading files...</div>
+
+        <div id="files-container" class="files-grid"></div>
+
+        <div id="files-empty" class="empty-state" style="display: none">
+          <h3>No Files Available</h3>
+          <p>Your teacher hasn't uploaded any course materials yet.</p>
+        </div>
+      </div>
+
+      <div class="quiz-container">
+        <!-- Start Quiz Section -->
+        <div id="start-section" class="start-section">
+          <div style="text-align: center;">
+            <h2 style="margin-bottom: 1rem; color: #2f2f2f">
+              Ready to Take the Quiz?
+            </h2>
+            <p style="margin-bottom: 2rem; color: #666; font-size: 1.1rem">
+              You will be presented with 10 random questions. Choose the best
+              answer for each question.
+            </p>
+            <button class="start-quiz-btn" onclick="startQuiz()">
+              Start Quiz
+            </button>
+          </div>
+          <div id="loading" class="loading" style="display: none">
+            Loading quiz questions...
+          </div>
+          <div id="empty-state" class="empty-state" style="display: none">
+            <h3>No Quiz Questions Available</h3>
+            <p>Please contact your teacher to add quiz questions.</p>
+          </div>
+        </div>
+
+        <!-- Quiz Section -->
+        <div id="quiz-section" class="quiz-section">
+          <div class="quiz-header">
+            <div class="question-counter">
+              Question <span id="current-question">1</span> of
+              <span id="total-questions">10</span>
+            </div>
+            <div class="timer">Time: <span id="timer">00:00</span></div>
+          </div>
+
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+
+          <div class="question-card">
+            <div class="question-text" id="question-text"></div>
+            <ul class="options-list" id="options-list"></ul>
+          </div>
+
+          <div class="quiz-actions">
+            <button
+              class="prev-btn"
+              id="prev-btn"
+              onclick="previousQuestion()"
+              disabled
+            >
+              Previous
+            </button>
+            <button class="next-btn" id="next-btn" onclick="nextQuestion()">
+              Next
+            </button>
+            <button
+              class="submit-btn"
+              id="submit-btn"
+              onclick="submitQuiz()"
+              style="display: none"
+            >
+              Submit Quiz
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="results-section">
+          <div class="results-card">
+            <h2 class="results-title">Quiz Completed!</h2>
+            <div class="final-score" id="final-score">0%</div>
+            <div class="score-details">
+              <div class="detail-item">
+                <div class="detail-number" id="correct-answers">0</div>
+                <div class="detail-label">Correct</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-number" id="wrong-answers">0</div>
+                <div class="detail-label">Wrong</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-number" id="time-taken">0:00</div>
+                <div class="detail-label">Time Taken</div>
+              </div>
+            </div>
+            <button class="retake-btn" onclick="retakeQuiz()">
+              Take Another Quiz
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="meetings-list">
+        <h2 class="card-title">📋 Scheduled Meetings</h2>
+
+        <div id="meetings-loading" class="loading">Loading meetings...</div>
+
+        <div id="meetings-container"></div>
+
+        <div id="meetings-empty" class="empty-state" style="display: none">
+          <h3>No Meetings Scheduled</h3>
+          <p>Create your first meeting using the form above.</p>
+        </div>
+      </div>
+      <div></div>
+    </div>
+
+    <script>
+      let currentQuestionIndex = 0;
+      let quizQuestions = [];
+      let userAnswers = [];
+      let quizStartTime = null;
+      let timerInterval = null;
+      let currentUser = null;
+
+      // Load user data and dashboard on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        loadUserData();
+        loadFiles();
+        loadMeetings();
+      });
+
+      // Load user data from URL parameters or sessionStorage
+      function loadUserData() {
+        console.log("called");
+
+        // Get user data from localStorage
+        const userData = JSON.parse(localStorage.getItem("currentUser"));
+
+        if (userData) {
+          console.log(userData);
+          currentUser = userData; // Assign to the global currentUser variable
+          document.getElementById(
+            "user-info"
+          ).textContent = `Welcome, ${userData.name}!`;
+        } else {
+          // No user data found, redirect to login
+          alert("Please log in first");
+          window.location.href = "/";
+          return;
+        }
+      }
+
+      // Load files function
+      async function loadFiles() {
+        try {
+          document.getElementById("files-loading").style.display = "block";
+          document.getElementById("files-empty").style.display = "none";
+
+          const response = await fetch("http://localhost:5000/api/files");
+          const data = await response.json();
+
+          document.getElementById("files-loading").style.display = "none";
+
+          if (data.files && data.files.length > 0) {
+            displayFiles(data.files);
+            document.getElementById("files-count").textContent = `${data.files.length} files`;
+          } else {
+            document.getElementById("files-empty").style.display = "block";
+            document.getElementById("files-count").textContent = "0 files";
+          }
+        } catch (error) {
+          console.error("Error loading files:", error);
+          document.getElementById("files-loading").innerHTML = "Error loading files";
+          document.getElementById("files-count").textContent = "0 files";
+        }
+      }
+
+      // Display files function
+      function displayFiles(files) {
+        const container = document.getElementById("files-container");
+        container.innerHTML = "";
+
+        files.forEach((file) => {
+          const fileElement = document.createElement("div");
+          fileElement.className = "file-card";
+
+          // Get file extension for icon
+          const extension = file.originalname.split('.').pop().toLowerCase();
+          const fileIcon = getFileIcon(extension);
+          
+          // Format file size
+          const fileSize = formatFileSize(file.size);
+          
+          // Format upload date
+          const uploadDate = new Date(file.uploadedAt).toLocaleDateString();
+
+          fileElement.innerHTML = `
+            <div class="file-icon">${fileIcon}</div>
+            <div class="file-name">${file.originalname}</div>
+            <div class="file-meta">
+              <div>Size: ${fileSize}</div>
+              <div>Uploaded: ${uploadDate}</div>
+              ${file.uploadedBy ? `<div>By: ${file.uploadedBy}</div>` : ''}
+            </div>
+            <div class="file-actions">
+              <button class="file-btn download-btn" onclick="downloadFile('${file.url}', '${file.originalname}')">
+                📥 Download
+              </button>
+              ${isViewableFile(extension) ? 
+                `<button class="file-btn view-btn" onclick="viewFile('${file.url}', '${extension}')">
+                  👁️ View
+                </button>` : ''
+              }
+            </div>
+          `;
+
+          container.appendChild(fileElement);
+        });
+      }
+
+      // Get file icon based on extension
+      function getFileIcon(extension) {
+        const iconMap = {
+          'pdf': '📄',
+          'doc': '📝',
+          'docx': '📝',
+          'txt': '📄',
+          'jpg': '🖼️',
+          'jpeg': '🖼️',
+          'png': '🖼️',
+          'gif': '🖼️',
+          'mp4': '🎥',
+          'avi': '🎥',
+          'mov': '🎥',
+          'mp3': '🎵',
+          'wav': '🎵',
+          'zip': '📦',
+          'rar': '📦',
+          'ppt': '📊',
+          'pptx': '📊',
+          'xls': '📈',
+          'xlsx': '📈'
+        };
+        return iconMap[extension] || '📄';
+      }
+
+      // Format file size
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
+
+      // Check if file is viewable in browser
+      function isViewableFile(extension) {
+        const viewableTypes = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'txt'];
+        return viewableTypes.includes(extension);
+      }
+
+      // Download file function
+      function downloadFile(url, filename) {
+        const link = document.createElement('a');
+        link.href = `http://localhost:5000${url}`;
+        link.download = filename;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      // View file function
+      function viewFile(url, extension) {
+        const fullUrl = `http://localhost:5000${url}`;
+        
+        if (extension === 'pdf' || ['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
+          // Open in new tab for images and PDFs
+          window.open(fullUrl, '_blank');
+        } else if (extension === 'txt') {
+          // For text files, you might want to show in a modal or new tab
+          window.open(fullUrl, '_blank');
+        }
+      }
+
+      // Modified loadMeetings function to filter for student
+      async function loadMeetings() {
+        try {
+          document.getElementById("meetings-loading").style.display = "block";
+          document.getElementById("meetings-empty").style.display = "none";
+
+          // Get student's class/group from user data
+          const studentClass = currentUser.class || currentUser.group;
+
+          // Fetch meetings filtered by student's class
+          const response = await fetch(
+            `http://localhost:5000/api/meetings?class=${studentClass}`
+          );
+          const data = await response.json();
+
+          document.getElementById("meetings-loading").style.display = "none";
+
+          if (data.meetings && data.meetings.length > 0) {
+            displayMeetings(data.meetings);
+          } else {
+            document.getElementById("meetings-empty").style.display = "block";
+          }
+        } catch (error) {
+          console.error("Error loading meetings:", error);
+          document.getElementById("meetings-loading").innerHTML =
+            "Error loading meetings";
+        }
+      }
+
+      // Modified displayMeetings function for student view
+      function displayMeetings(meetings) {
+        const container = document.getElementById("meetings-container");
+        container.innerHTML = "";
+
+        // Sort meetings by date (newest first)
+        meetings.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+
+        meetings.forEach((meeting) => {
+          const meetingDate = new Date(meeting.datetime);
+          const now = new Date();
+          const isUpcoming = meetingDate > now;
+          const isPast = meetingDate < now;
+
+          const meetingElement = document.createElement("div");
+          meetingElement.className = "meeting-item";
+
+          if (isPast) {
+            meetingElement.classList.add("past-meeting");
+          } else {
+            meetingElement.classList.add("upcoming-meeting");
+          }
+
+          meetingElement.innerHTML = `
+            <div class="meeting-header">
+                <div style="flex: 1;">
+                    <div class="meeting-title">${meeting.title}</div>
+                    <div class="meeting-time">
+                        📅 ${meetingDate.toLocaleDateString()} at ${meetingDate.toLocaleTimeString(
+            [],
+            { hour: "2-digit", minute: "2-digit" }
+          )}
+                        ${
+                          isUpcoming
+                            ? '<span class="status-badge upcoming">Upcoming</span>'
+                            : ""
+                        }
+                        ${
+                          isPast
+                            ? '<span class="status-badge past">Completed</span>'
+                            : ""
+                        }
+                    </div>
+                    ${
+                      meeting.description
+                        ? `<div class="meeting-description">${meeting.description}</div>`
+                        : ""
+                    }
+                </div>
+            </div>
+
+            <div class="meeting-details">
+                <div class="meeting-detail-item">
+                    <span class="meeting-detail-label">Host:</span>
+                    <span class="meeting-detail-value">${
+                      meeting.hostName || "Teacher"
+                    }</span>
+                </div>
+                <div class="meeting-detail-item">
+                    <span class="meeting-detail-label">Meeting ID:</span>
+                    <span class="meeting-detail-value">${
+                      meeting.meetingId
+                    }</span>
+                </div>
+                <div class="meeting-detail-item">
+                    <span class="meeting-detail-label">Password:</span>
+                    <span class="meeting-detail-value">${
+                      meeting.password
+                    }</span>
+                </div>
+                <div class="meeting-detail-item">
+                    <span class="meeting-detail-label">Duration:</span>
+                    <span class="meeting-detail-value">${
+                      meeting.duration
+                    } minutes</span>
+                </div>
+            </div>
+
+            <div class="meeting-actions">
+           
+                ${
+                  isUpcoming
+                    ? `
+                <button class="btn btn-success" onclick="joinMeeting('${meeting.joinUrl}', '${meeting.meetingId}', '${meeting.password}')">
+                    🚀 Join Meeting
+                </button>
+                `
+                    : ""
+                }
+            </div>
+        `;
+
+          container.appendChild(meetingElement);
+        });
+      }
+
+      // Function to handle joining a meeting
+      function joinMeeting(url, meetingId, password) {
+        // You might want to confirm with the student first
+        if (confirm("Are you ready to join this meeting?")) {
+          // Open the meeting URL in a new tab
+          window.open(url, "_blank");
+
+          // Alternatively, you could auto-fill the meeting info
+          // window.open(`${url}?pwd=${password}`, '_blank');
+
+          // Or show a modal with instructions
+          // showMeetingInstructions(meetingId, password);
+        }
+      }
+
+      // Start quiz
+      async function startQuiz() {
+        document.getElementById("loading").style.display = "block";
+        document.querySelector(".start-quiz-btn").style.display = "none";
+
+        try {
+          const response = await fetch(
+            "http://localhost:5000/api/quiz/random/10"
+          );
+          const data = await response.json();
+
+          if (data.questions && data.questions.length > 0) {
+            quizQuestions = data.questions;
+            userAnswers = new Array(quizQuestions.length).fill(null);
+            currentQuestionIndex = 0;
+
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("start-section").style.display = "none";
+            document.getElementById("quiz-section").style.display = "block";
+
+            document.getElementById("total-questions").textContent =
+              quizQuestions.length;
+
+            startTimer();
+            displayQuestion();
+          } else {
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("empty-state").style.display = "block";
+          }
+        } catch (error) {
+          console.error("Error starting quiz:", error);
+          document.getElementById("loading").innerHTML =
+            "Error loading quiz questions";
+        }
+      }
+
+      // Start timer
+      function startTimer() {
+        quizStartTime = new Date();
+        timerInterval = setInterval(updateTimer, 1000);
+      }
+
+      // Update timer
+      function updateTimer() {
+        const currentTime = new Date();
+        const elapsedSeconds = Math.floor((currentTime - quizStartTime) / 1000);
+        const minutes = Math.floor(elapsedSeconds / 60);
+        const seconds = elapsedSeconds % 60;
+        document.getElementById("timer").textContent = `${minutes
+          .toString()
+          .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+      }
+
+      // Display current question
+      function displayQuestion() {
+        const question = quizQuestions[currentQuestionIndex];
+        const optionLetters = ["A", "B", "C", "D"];
+
+        document.getElementById("current-question").textContent =
+          currentQuestionIndex + 1;
+        document.getElementById("question-text").textContent =
+          question.question;
+
+        const optionsList = document.getElementById("options-list");
+        optionsList.innerHTML = "";
+
+        question.options.forEach((option, index) => {
+          const li = document.createElement("li");
+          li.className = "option-item";
+          li.onclick = () => selectOption(index);
+
+          li.innerHTML = `
+                    <div class="option-letter">${optionLetters[index]}</div>
+                    <div>${option}</div>
+                `;
+
+          if (userAnswers[currentQuestionIndex] === index) {
+            li.classList.add("selected");
+          }
+
+          optionsList.appendChild(li);
+        });
+
+        updateProgressBar();
+        updateNavigationButtons();
+      }
+
+      // Select option
+      function selectOption(optionIndex) {
+        userAnswers[currentQuestionIndex] = optionIndex;
+
+        // Update visual selection
+        document.querySelectorAll(".option-item").forEach((item, index) => {
+          if (index === optionIndex) {
+            item.classList.add("selected");
+          } else {
+            item.classList.remove("selected");
+          }
+        });
+      }
+
+      // Update progress bar
+      function updateProgressBar() {
+        const progress =
+          ((currentQuestionIndex + 1) / quizQuestions.length) * 100;
+        document.getElementById("progress-fill").style.width = progress + "%";
+      }
+
+      // Update navigation buttons
+      function updateNavigationButtons() {
+        const prevBtn = document.getElementById("prev-btn");
+        const nextBtn = document.getElementById("next-btn");
+        const submitBtn = document.getElementById("submit-btn");
+
+        prevBtn.disabled = currentQuestionIndex === 0;
+
+        if (currentQuestionIndex === quizQuestions.length - 1) {
+          nextBtn.style.display = "none";
+          submitBtn.style.display = "block";
+        } else {
+          nextBtn.style.display = "block";
+          submitBtn.style.display = "none";
+        }
+      }
+
+      // Previous question
+      function previousQuestion() {
+        if (currentQuestionIndex > 0) {
+          currentQuestionIndex--;
+          displayQuestion();
+        }
+      }
+
+      // Next question
+      function nextQuestion() {
+        if (currentQuestionIndex < quizQuestions.length - 1) {
+          currentQuestionIndex++;
+          displayQuestion();
+        }
+      }
+
+      // Submit quiz
+      async function submitQuiz() {
+        if (!currentUser) {
+          alert("User data not found. Please log in again.");
+          return;
+        }
+
+        clearInterval(timerInterval);
+
+        const endTime = new Date();
+        const timeTaken = Math.floor((endTime - quizStartTime) / 1000);
+
+        let correctCount = 0;
+        quizQuestions.forEach((question, index) => {
+          if (userAnswers[index] === question.correct_answer) {
+            correctCount++;
+          }
+        });
+
+        const score = Math.round((correctCount / quizQuestions.length) * 100);
+
+        // Save quiz result with actual user data
+        try {
+          const response = await fetch(
+            "http://localhost:5000/api/student/quiz-result",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                userId: currentUser.id,
+                studentEmail: currentUser.email,
+                score: score,
+                correctAnswers: correctCount,
+                totalQuestions: quizQuestions.length,
+                timeTaken: timeTaken,
+                answers: userAnswers,
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to save quiz result");
+          }
+
+          console.log("Quiz result saved successfully");
+        } catch (error) {
+          console.error("Error saving quiz result:", error);
+          alert("Quiz completed but failed to save results. Please try again.");
+        }
+
+        // Display results
+        displayResults(score, correctCount, timeTaken);
+      }
+
+      // Display results
+      function displayResults(score, correctCount, timeTaken) {
+        const minutes = Math.floor(timeTaken / 60);
+        const seconds = timeTaken % 60;
+        const timeString = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+
+        document.getElementById("final-score").textContent = score + "%";
+        document.getElementById("correct-answers").textContent = correctCount;
+        document.getElementById("wrong-answers").textContent =
+          quizQuestions.length - correctCount;
+        document.getElementById("time-taken").textContent = timeString;
+
+        document.getElementById("quiz-section").style.display = "none";
+        document.getElementById("results-section").style.display = "block";
+
+        // Reload dashboard stats
+        loadDashboardStats();
+      }
+
+      // Retake quiz
+      function retakeQuiz() {
+        document.getElementById("results-section").style.display = "none";
+        document.getElementById("start-section").style.display = "block";
+        document.querySelector(".start-quiz-btn").style.display = "block";
+
+        // Reset quiz data
+        currentQuestionIndex = 0;
+        quizQuestions = [];
+        userAnswers = [];
+        quizStartTime = null;
+
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+      }
+
+      // Logout function
+      function logout() {
+        if (confirm("Are you sure you want to logout?")) {
+          // Clear session data
+          localStorage.removeItem("currentUser");
+          window.location.href = "/";
+        }
+      }
+    </script>
+  </body>
+</html>

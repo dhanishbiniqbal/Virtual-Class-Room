@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teacher Dashboard</title>
+    <link rel="stylesheet" href="./teacher.css" />
+  </head>
+  <body>
+    <div class="navbar">
+      <span class="home-icon" onclick="logout()">🏠 Logout</span>
+      <div class="btt">
+        <button class="meet-btn" id="meetings" onclick="MeetingPage()">
+          Meeting
+        </button>
+        <button class="meet-btn" id="whiteboard" onclick="WhiteboardPage()">
+          WhiteBoard
+        </button>
+      
+        <div class="user-info-teacher" id="user-info-teacher"></div>
+      </div>
+    </div>
+
+    <div class="dashboard">
+      <div class="dashboard-header">
+        <h1 class="dashboard-title">Quiz Management</h1>
+        <button class="add-quiz-btn" onclick="openAddQuizModal()">
+          + Add New Quiz Question
+        </button>
+      </div>
+
+      <div class="quiz-container">
+        <div id="loading" class="loading">Loading quiz questions...</div>
+        <div id="quiz-grid" class="quiz-grid"></div>
+        <div id="empty-state" class="empty-state" style="display: none">
+          <h3>No Quiz Questions Yet</h3>
+          <p>
+            Click "Add New Quiz Question" to create your first quiz question.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="quizModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 id="modal-title">Add New Quiz Question</h2>
+        <form id="quiz-form">
+          <div class="form-group">
+            <label for="question">Question:</label>
+            <textarea
+              id="question"
+              name="question"
+              required
+              placeholder="Enter your quiz question here..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Options (Select the correct answer):</label>
+            <div class="options-container">
+              <div class="option-input">
+                <input type="radio" name="correct_answer" value="0" required />
+                <input
+                  type="text"
+                  id="option1"
+                  name="option1"
+                  placeholder="Option 1"
+                  required
+                />
+              </div>
+              <div class="option-input">
+                <input type="radio" name="correct_answer" value="1" required />
+                <input
+                  type="text"
+                  id="option2"
+                  name="option2"
+                  placeholder="Option 2"
+                  required
+                />
+              </div>
+              <div class="option-input">
+                <input type="radio" name="correct_answer" value="2" required />
+                <input
+                  type="text"
+                  id="option3"
+                  name="option3"
+                  placeholder="Option 3"
+                  required
+                />
+              </div>
+              <div class="option-input">
+                <input type="radio" name="correct_answer" value="3" required />
+                <input
+                  type="text"
+                  id="option4"
+                  name="option4"
+                  placeholder="Option 4"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submit-btn">
+            Add Question
+          </button>
+        </form>
+      </div>
+    </div>
+
+ 
+    <!-- Add this to your teacher dashboard HTML, after the existing quiz-container div -->
+    <div class="ffile">
+      <div class="file-upload-container">
+        <h2>Upload Study Materials</h2>
+
+        <div class="file-upload-box">
+          <form id="file-upload-form">
+            <input
+              type="file"
+              id="file-input"
+              name="file"
+              multiple
+              style="display: none"
+            />
+            <label for="file-input" class="file-upload-label">
+              <div class="upload-icon">📁</div>
+              <div class="upload-text">
+                Click to browse or drag and drop files here
+              </div>
+            </label>
+            <input type="hidden" id="uploaded-by" name="uploadedBy" />
+            <button type="submit" class="upload-btn" disabled id="upload-btn">
+              Upload Files
+            </button>
+          </form>
+        </div>
+
+        <div class="file-list-container">
+          <h3>Uploaded Files</h3>
+          <div id="file-list-loading" class="loading">Loading files...</div>
+          <div id="file-list-empty" class="empty-state" style="display: none">
+            <p>No files uploaded yet.</p>
+          </div>
+          <div id="file-list" class="file-list"></div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="students-container"
+      style="
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-top: 2rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      "
+    >
+      <h2 style="margin-bottom: 1.5rem; color: #4a5568">
+        Student Quiz Results
+      </h2>
+
+      <div style="overflow-x: auto">
+        <table
+          id="students-table"
+          style="width: 100%; border-collapse: collapse"
+        >
+          <thead>
+            <tr style="background-color: #f8f9fa">
+              <th
+                style="
+                  padding: 12px 15px;
+                  text-align: left;
+                  border-bottom: 2px solid #e2e8f0;
+                "
+              >
+                Name
+              </th>
+              <th
+                style="
+                  padding: 12px 15px;
+                  text-align: left;
+                  border-bottom: 2px solid #e2e8f0;
+                "
+              >
+                Email
+              </th>
+              <th
+                style="
+                  padding: 12px 15px;
+                  text-align: left;
+                  border-bottom: 2px solid #e2e8f0;
+                "
+              >
+                Best Score
+              </th>
+              <th
+                style="
+                  padding: 12px 15px;
+                  text-align: left;
+                  border-bottom: 2px solid #e2e8f0;
+                "
+              >
+                Avg Score
+              </th>
+              <th
+                style="
+                  padding: 12px 15px;
+                  text-align: left;
+                  border-bottom: 2px solid #e2e8f0;
+                "
+              >
+                Last Attempt
+              </th>
+              <th
+                style="
+                  padding: 12px 15px;
+                  text-align: left;
+                  border-bottom: 2px solid #e2e8f0;
+                "
+              >
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody id="students-table-body">
+            <!-- Student data will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+
+      <div id="student-results-loading" class="loading" style="display: none">
+        Loading student results...
+      </div>
+      <div id="student-results-empty" class="empty-state" style="display: none">
+        <h3>No Students Found</h3>
+        <p>There are no students registered in the system yet.</p>
+      </div>
+    </div>
+    <div class="hei"></div>
+
+    <!-- Add this modal for detailed student results -->
+    <div id="studentResultsModal" class="modal">
+      <div class="modal-content" style="max-width: 800px">
+        <span class="close" onclick="closeStudentResultsModal()">&times;</span>
+        <h2 id="student-results-modal-title">Student Quiz Results</h2>
+
+        <div style="margin-bottom: 1rem">
+          <strong>Name:</strong> <span id="modal-student-name"></span><br />
+          <strong>Email:</strong> <span id="modal-student-email"></span>
+        </div>
+
+        <div style="overflow-x: auto">
+          <table style="width: 100%; border-collapse: collapse">
+            <thead>
+              <tr style="background-color: #f8f9fa">
+                <th
+                  style="
+                    padding: 10px 12px;
+                    text-align: left;
+                    border-bottom: 2px solid #e2e8f0;
+                  "
+                >
+                  Date
+                </th>
+                <th
+                  style="
+                    padding: 10px 12px;
+                    text-align: left;
+                    border-bottom: 2px solid #e2e8f0;
+                  "
+                >
+                  Score
+                </th>
+                <th
+                  style="
+                    padding: 10px 12px;
+                    text-align: left;
+                    border-bottom: 2px solid #e2e8f0;
+                  "
+                >
+                  Correct
+                </th>
+                <th
+                  style="
+                    padding: 10px 12px;
+                    text-align: left;
+                    border-bottom: 2px solid #e2e8f0;
+                  "
+                >
+                  Total
+                </th>
+                <th
+                  style="
+                    padding: 10px 12px;
+                    text-align: left;
+                    border-bottom: 2px solid #e2e8f0;
+                  "
+                >
+                  Time Taken
+                </th>
+              </tr>
+            </thead>
+            <tbody id="student-results-details">
+              <!-- Detailed results will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+
+        <div
+          id="student-results-details-empty"
+          style="text-align: center; padding: 2rem; display: none"
+        >
+          <p>No quiz results found for this student.</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentEditId = null;
+
+      // Load quiz questions on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        loadQuizQuestions();
+      });
+
+  
+      // Load quiz questions from backend
+      async function loadQuizQuestions() {
+        try {
+          const response = await fetch("http://localhost:5000/api/quiz");
+          const data = await response.json();
+
+          document.getElementById("loading").style.display = "none";
+
+          if (data.questions && data.questions.length > 0) {
+            displayQuizQuestions(data.questions);
+            document.getElementById("empty-state").style.display = "none";
+          } else {
+            document.getElementById("empty-state").style.display = "block";
+          }
+        } catch (error) {
+          console.error("Error loading quiz questions:", error);
+          document.getElementById("loading").innerHTML =
+            "Error loading quiz questions";
+        }
+      }
+
+      // Add these functions to your teacher dashboard script
+
+      // Load student results
+      async function loadStudentResults() {
+        try {
+          document.getElementById("student-results-loading").style.display =
+            "block";
+          document.getElementById("student-results-empty").style.display =
+            "none";
+
+          const response = await fetch(
+            "http://localhost:5000/api/teacher/students-with-results"
+          );
+          const data = await response.json();
+          console.log(data);
+
+          document.getElementById("student-results-loading").style.display =
+            "none";
+
+          if (data.students && data.students.length > 0) {
+            displayStudentResults(data.students);
+            document.getElementById("student-results-empty").style.display =
+              "none";
+          } else {
+            document.getElementById("student-results-empty").style.display =
+              "block";
+          }
+        } catch (error) {
+          console.error("Error loading student results:", error);
+          document.getElementById("student-results-loading").innerHTML =
+            "Error loading student results";
+        }
+      }
+      document.addEventListener("DOMContentLoaded", function () {
+        loadUserData();
+        loadDashboardStats();
+      });
+
+      function loadUserData() {
+        console.log("called");
+
+        // First try to get from URL parameters
+
+        const userData = JSON.parse(localStorage.getItem("currentUser"));
+
+        // Fallback to sessionStorage
+
+        if (userData) {
+          console.log(userData);
+
+          document.getElementById(
+            "user-info-teacher"
+          ).textContent = `Welcome, ${userData.name}!`;
+        } else {
+          // No user data found, redirect to login
+          alert("Please log in first");
+          window.location.href = "/";
+          return;
+        }
+      }
+
+      // Display student results in table
+      function displayStudentResults(students) {
+        const tbody = document.getElementById("students-table-body");
+        tbody.innerHTML = "";
+        console.log("stuu", students);
+
+        students.forEach((student) => {
+          const row = document.createElement("tr");
+          row.style.borderBottom = "1px solid #e2e8f0";
+
+          // Format last attempt date
+          let lastAttempt = "Never";
+          if (student.lastQuizDate) {
+            const date = new Date(student.lastQuizDate);
+            lastAttempt =
+              date.toLocaleDateString() + " " + date.toLocaleTimeString();
+          }
+
+          row.innerHTML = `
+            <td style="padding: 12px 15px;">${student.name || "N/A"}</td>
+            <td style="padding: 12px 15px;">${student.email}</td>
+            <td style="padding: 12px 15px;">${student.bestScore}%</td>
+            <td style="padding: 12px 15px;">${student.averageScore}%</td>
+            <td style="padding: 12px 15px;">${lastAttempt}</td>
+            <td style="padding: 12px 15px;">
+                <button onclick="viewStudentDetails('${student.userId}', '${
+            student.name
+          }', '${student.email}')" 
+                        style="background: #667eea; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">
+                    View Details
+                </button>
+            </td>
+        `;
+
+          tbody.appendChild(row);
+        });
+      }
+
+      // View detailed student results
+      async function viewStudentDetails(userId, name, email) {
+        try {
+          document.getElementById("modal-student-name").textContent = name;
+          document.getElementById("modal-student-email").textContent = email;
+
+          // Set the modal title with student name
+          document.getElementById(
+            "student-results-modal-title"
+          ).textContent = `${name}'s Quiz Results`;
+
+          // Show loading state
+          const tbody = document.getElementById("student-results-details");
+          tbody.innerHTML =
+            '<tr><td colspan="5" style="text-align: center; padding: 1rem;">Loading results...</td></tr>';
+          document.getElementById(
+            "student-results-details-empty"
+          ).style.display = "none";
+
+          // Open modal immediately
+          document.getElementById("studentResultsModal").style.display =
+            "block";
+
+          // Fetch detailed results
+          const response = await fetch(
+            `http://localhost:5000/api/teacher/student-results/${email}`
+          );
+          const data = await response.json();
+
+          tbody.innerHTML = "";
+
+          if (data.results && data.results.length > 0) {
+            data.results.forEach((result) => {
+              const date = new Date(result.completedAt);
+              const timeTakenMinutes = Math.floor(result.timeTaken / 60);
+              const timeTakenSeconds = result.timeTaken % 60;
+              const timeTaken = `${timeTakenMinutes}m ${timeTakenSeconds}s`;
+
+              const row = document.createElement("tr");
+              row.style.borderBottom = "1px solid #e2e8f0";
+              row.innerHTML = `
+                    <td style="padding: 10px 12px;">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</td>
+                    <td style="padding: 10px 12px;">${result.score}%</td>
+                    <td style="padding: 10px 12px;">${
+                      result.correctAnswers
+                    }</td>
+                    <td style="padding: 10px 12px;">${
+                      result.totalQuestions
+                    }</td>
+                    <td style="padding: 10px 12px;">${timeTaken}</td>
+                `;
+              tbody.appendChild(row);
+            });
+          } else {
+            document.getElementById(
+              "student-results-details-empty"
+            ).style.display = "block";
+          }
+        } catch (error) {
+          console.error("Error fetching student details:", error);
+          const tbody = document.getElementById("student-results-details");
+          tbody.innerHTML =
+            '<tr><td colspan="5" style="text-align: center; padding: 1rem; color: #e74c3c;">Error loading results</td></tr>';
+        }
+      }
+
+      // Close student results modal
+      function closeStudentResultsModal() {
+        document.getElementById("studentResultsModal").style.display = "none";
+      }
+
+      // Call loadStudentResults when the page loads
+      document.addEventListener("DOMContentLoaded", function () {
+        loadQuizQuestions();
+        loadStudentResults(); // Add this line
+      });
+
+      // Display quiz questions
+      function displayQuizQuestions(questions) {
+        const quizGrid = document.getElementById("quiz-grid");
+        quizGrid.innerHTML = "";
+
+        questions.forEach((question) => {
+          const quizCard = document.createElement("div");
+          quizCard.className = "quiz-card";
+
+          const optionsList = question.options
+            .map(
+              (option, index) =>
+                `<li class="${
+                  index === question.correct_answer ? "correct" : ""
+                }">${option}</li>`
+            )
+            .join("");
+
+          quizCard.innerHTML = `
+                    <div class="quiz-question">${question.question}</div>
+                  
+                    <div class="quiz-actions">
+                        <button class="edit-btn" onclick="editQuestion('${question._id}')">Edit</button>
+                        <button class="delete-btn" onclick="deleteQuestion('${question._id}')">Delete</button>
+                    </div>
+                `;
+
+          quizGrid.appendChild(quizCard);
+        });
+      }
+
+      // File Upload Functionality
+      document.addEventListener("DOMContentLoaded", function () {
+        // Set the uploadedBy field with the current user's email
+        const userData = JSON.parse(localStorage.getItem("currentUser"));
+        if (userData) {
+          document.getElementById("uploaded-by").value = userData.name;
+        }
+
+        // Initialize file upload functionality
+        initFileUpload();
+        loadFiles();
+      });
+
+      function initFileUpload() {
+        const fileInput = document.getElementById("file-input");
+        const fileUploadLabel = document.querySelector(".file-upload-label");
+        const uploadBtn = document.getElementById("upload-btn");
+        const fileUploadForm = document.getElementById("file-upload-form");
+
+        // Handle drag and drop
+        fileUploadLabel.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          fileUploadLabel.classList.add("dragover");
+        });
+
+        fileUploadLabel.addEventListener("dragleave", () => {
+          fileUploadLabel.classList.remove("dragover");
+        });
+
+        fileUploadLabel.addEventListener("drop", (e) => {
+          e.preventDefault();
+          fileUploadLabel.classList.remove("dragover");
+          fileInput.files = e.dataTransfer.files;
+          updateFileSelection();
+        });
+
+        // Handle file selection via click
+        fileInput.addEventListener("change", updateFileSelection);
+
+        // Handle form submission
+        fileUploadForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          if (!fileInput.files || fileInput.files.length === 0) {
+            alert("Please select at least one file to upload");
+            return;
+          }
+
+          const formData = new FormData();
+          for (let i = 0; i < fileInput.files.length; i++) {
+            formData.append("file", fileInput.files[i]);
+          }
+          formData.append(
+            "uploadedBy",
+            document.getElementById("uploaded-by").value
+          );
+
+          try {
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = "Uploading...";
+
+            const response = await fetch("http://localhost:5000/api/upload", {
+              method: "POST",
+              body: formData,
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+              alert("Files uploaded successfully!");
+              fileInput.value = "";
+              uploadBtn.disabled = true;
+              uploadBtn.textContent = "Upload Files";
+              loadFiles();
+            } else {
+              throw new Error(data.message || "Error uploading files");
+            }
+          } catch (error) {
+            console.error("Error uploading files:", error);
+            alert("Error uploading files: " + error.message);
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = "Upload Files";
+          }
+        });
+      }
+
+      function updateFileSelection() {
+        const fileInput = document.getElementById("file-input");
+        const uploadBtn = document.getElementById("upload-btn");
+
+        if (fileInput.files && fileInput.files.length > 0) {
+          uploadBtn.disabled = false;
+          const fileNames = Array.from(fileInput.files)
+            .map((file) => file.name)
+            .join(", ");
+          document.querySelector(
+            ".upload-text"
+          ).textContent = `${fileInput.files.length} file(s) selected: ${fileNames}`;
+        } else {
+          uploadBtn.disabled = true;
+          document.querySelector(".upload-text").textContent =
+            "Click to browse or drag and drop files here";
+        }
+      }
+
+      async function loadFiles() {
+        try {
+          document.getElementById("file-list-loading").style.display = "block";
+          document.getElementById("file-list-empty").style.display = "none";
+          document.getElementById("file-list").innerHTML = "";
+
+          const response = await fetch("http://localhost:5000/api/files");
+          const data = await response.json();
+
+          document.getElementById("file-list-loading").style.display = "none";
+
+          if (data.files && data.files.length > 0) {
+            displayFiles(data.files);
+            document.getElementById("file-list-empty").style.display = "none";
+          } else {
+            document.getElementById("file-list-empty").style.display = "block";
+          }
+        } catch (error) {
+          console.error("Error loading files:", error);
+          document.getElementById("file-list-loading").innerHTML =
+            "Error loading files. Please try again.";
+        }
+      }
+
+      function displayFiles(files) {
+        const fileList = document.getElementById("file-list");
+        fileList.innerHTML = "";
+
+        files.forEach((file) => {
+          const fileItem = document.createElement("div");
+          fileItem.className = "file-item";
+
+          const fileSize = formatFileSize(file.size);
+          const fileDate = new Date(file.uploadedAt).toLocaleString();
+
+          fileItem.innerHTML = `
+      <div class="file-icon">${getFileIcon(file.originalname)}</div>
+      <div class="file-info">
+        <div class="file-name">${file.originalname}</div>
+        <div class="file-meta">${fileSize} • ${fileDate} • Uploaded by ${
+            file.uploadedBy
+          }</div>
+      </div>
+      <div class="file-actions">
+        <a href="http://localhost:5000${
+          file.url
+        }" target="_blank" class="download-btn">Download</a>
+        <button class="delete-btn" onclick="deleteFile('${
+          file.id
+        }')">Delete</button>
+      </div>
+    `;
+
+          fileList.appendChild(fileItem);
+        });
+      }
+
+      async function deleteFile(fileId) {
+        if (confirm("Are you sure you want to delete this file?")) {
+          try {
+            const response = await fetch(
+              `http://localhost:5000/api/files/${fileId}`,
+              {
+                method: "DELETE",
+              }
+            );
+
+            if (response.ok) {
+              alert("File deleted successfully");
+              loadFiles();
+            } else {
+              const error = await response.json();
+              throw new Error(error.message || "Error deleting file");
+            }
+          } catch (error) {
+            console.error("Error deleting file:", error);
+            alert("Error deleting file: " + error.message);
+          }
+        }
+      }
+
+      // Helper functions
+      function formatFileSize(bytes) {
+        if (bytes === 0) return "0 Bytes";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2) + " " + sizes[i]);
+      }
+
+      function getFileIcon(filename) {
+        const ext = filename.split(".").pop().toLowerCase();
+        const icons = {
+          pdf: "📕",
+          doc: "📘",
+          docx: "📘",
+          ppt: "📊",
+          pptx: "📊",
+          xls: "📈",
+          xlsx: "📈",
+          txt: "📄",
+          jpg: "🖼️",
+          jpeg: "🖼️",
+          png: "🖼️",
+          gif: "🖼️",
+          mp3: "🎵",
+          mp4: "🎬",
+          zip: "🗜️",
+          rar: "🗜️",
+        };
+        return icons[ext] || "📁";
+      }
+
+      function MeetingPage() {
+        window.location.href = "meetingCreate.html";
+      }
+      function WhiteboardPage() {
+        window.location.href = "whiteBoard.html";
+      }
+      // Open add quiz modal
+      function openAddQuizModal() {
+        currentEditId = null;
+        document.getElementById("modal-title").textContent =
+          "Add New Quiz Question";
+        document.getElementById("submit-btn").textContent = "Add Question";
+        document.getElementById("quiz-form").reset();
+        document.getElementById("quizModal").style.display = "block";
+      }
+
+      // Close modal
+      function closeModal() {
+        document.getElementById("quizModal").style.display = "none";
+        currentEditId = null;
+      }
+
+      // Handle form submission
+      document
+        .getElementById("quiz-form")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const formData = new FormData(e.target);
+          const questionData = {
+            question: formData.get("question"),
+            options: [
+              formData.get("option1"),
+              formData.get("option2"),
+              formData.get("option3"),
+              formData.get("option4"),
+            ],
+            correct_answer: parseInt(formData.get("correct_answer")),
+          };
+
+          try {
+            let response;
+            if (currentEditId) {
+              // Update existing question
+              response = await fetch(
+                `http://localhost:5000/api/quiz/${currentEditId}`,
+                {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify(questionData),
+                }
+              );
+            } else {
+              // Add new question
+              response = await fetch("http://localhost:5000/api/quiz", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(questionData),
+              });
+            }
+
+            if (response.ok) {
+              closeModal();
+              loadQuizQuestions();
+              alert(
+                currentEditId
+                  ? "Question updated successfully!"
+                  : "Question added successfully!"
+              );
+            } else {
+              const error = await response.json();
+              alert("Error: " + error.message);
+            }
+          } catch (error) {
+            console.error("Error saving question:", error);
+            alert("Error saving question");
+          }
+        });
+
+      // Edit question
+      async function editQuestion(id) {
+        try {
+          const response = await fetch(`http://localhost:5000/api/quiz/${id}`);
+          const data = await response.json();
+
+          if (data.question) {
+            currentEditId = id;
+            document.getElementById("modal-title").textContent =
+              "Edit Quiz Question";
+            document.getElementById("submit-btn").textContent =
+              "Update Question";
+
+            // Fill form with existing data
+            document.getElementById("question").value = data.question.question;
+            document.getElementById("option1").value = data.question.options[0];
+            document.getElementById("option2").value = data.question.options[1];
+            document.getElementById("option3").value = data.question.options[2];
+            document.getElementById("option4").value = data.question.options[3];
+
+            // Set correct answer radio button
+            document.querySelector(
+              `input[name="correct_answer"][value="${data.question.correct_answer}"]`
+            ).checked = true;
+
+            document.getElementById("quizModal").style.display = "block";
+          }
+        } catch (error) {
+          console.error("Error fetching question:", error);
+          alert("Error loading question for editing");
+        }
+      }
+
+      // Delete question
+      async function deleteQuestion(id) {
+        if (confirm("Are you sure you want to delete this question?")) {
+          try {
+            const response = await fetch(
+              `http://localhost:5000/api/quiz/${id}`,
+              {
+                method: "DELETE",
+              }
+            );
+
+            if (response.ok) {
+              loadQuizQuestions();
+              alert("Question deleted successfully!");
+            } else {
+              const error = await response.json();
+              alert("Error: " + error.message);
+            }
+          } catch (error) {
+            console.error("Error deleting question:", error);
+            alert("Error deleting question");
+          }
+        }
+      }
+
+      // Logout function
+      function logout() {
+        if (confirm("Are you sure you want to logout?")) {
+          window.location.href = "/"; // Redirect to login page
+        }
+      }
+
+      // Close modal when clicking outside
+      window.onclick = function (event) {
+        const modal = document.getElementById("quizModal");
+        if (event.target === modal) {
+          closeModal();
+        }
+      };
+    </script>
+  </body>
+</html>
